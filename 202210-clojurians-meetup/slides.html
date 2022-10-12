@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+
+<title>Clorth</title>
+
+<meta name="description" content="Clorth">
+
+  <meta name="author" content="<strong>A Forth In Clojure</strong>" />
+
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<link rel="stylesheet" href="../reveal.js/plugin/toc-progress/toc-progress.css">
+<link rel="stylesheet" href="../reveal.js/css/reveal.css">
+  <link rel="stylesheet" href="../reveal.js/css/theme/beige.css" id="theme">
+
+
+<!-- For syntax highlighting -->
+  <link rel="stylesheet" href="../reveal.js/lib/css/zenburn.css">
+
+
+<!-- If the query includes 'print-pdf', use the PDF print sheet -->
+<script>
+  document.write( '<link rel="stylesheet" href="../reveal.js/css/print/' +
+    ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) +
+    '.css" type="text/css" media="print">' );
+</script>
+
+<!--[if lt IE 9]>
+<script src="lib/js/html5shiv.js"></script>
+<![endif]-->
+</head>
+
+<body>
+
+<div class="reveal">
+
+<!-- Any section element inside of this container is displayed as a slide -->
+<div class="slides">
+
+<section>
+<h1>Clorth</h1>
+<h3><strong>A Forth In Clojure</strong></h3>
+<p>
+<h4>London Clojurians Meetup - October 12th 2022</h4>
+</p>
+</section>
+
+
+<section id="section" class="level4">
+<h4><small></small></h4>
+<p><img src="https://raw.githubusercontent.com/reborg/clorth-talk/master/202210-clojurians-meetup/media/reclojure.png" width="600"></p>
+<ul>
+<li>reclojure.org 2022 is just around the corner!</li>
+<li>The CfP is still open! Hurry up!</li>
+<li>https://sessionize.com/reclojure-2022/</li>
+</ul>
+</section>
+<section id="many-flavours-of-why" class="level1">
+<h1>Many flavours of “why”?</h1>
+<ul>
+<li>Why implementing a language?</li>
+<li>Why implementing a language in Clojure?</li>
+<li>Why implementing Forth in Clojure?</li>
+</ul>
+</section>
+<section id="why-implementing-a-language" class="level1">
+<h1>Why implementing a language?</h1>
+<ul>
+<li>Effective way to learn</li>
+<li>Getting familiar with different way of thinking programs</li>
+<li>Trick famously popularized “The Pragmatic Programmer” book:</li>
+</ul>
+<blockquote>
+<p><small> Learn at least one new language every year. Different
+languages solve the same problems in different ways. By learning several
+different approaches, you can help broaden your thinking and avoid
+getting struck in a rut. </small></p>
+</blockquote>
+</section>
+<section id="why-implementing-a-language-in-clojure" class="level1">
+<h1><small>Why implementing a language in Clojure?</small></h1>
+<p>Well, it’s the language I’m most fluent with…</p>
+<section id="but-also" class="level2">
+<h2>but also</h2>
+</section>
+<section id="clojure-has-a-customisable-repl" class="level2">
+<h2>Clojure has a customisable REPL</h2>
+</section>
+<section id="great-for-both-internal-lispy-or-external-dsls"
+class="level2">
+<h2>Great for both internal (lispy) or external DSLs</h2>
+</section>
+<section id="clojure-has-great-multimethod-dispatch-facilities"
+class="level2">
+<h2>Clojure has great multimethod dispatch facilities</h2>
+</section>
+</section>
+<section id="why-forth" class="level1">
+<h1>Why Forth?</h1>
+<ul>
+<li>What if Clojure didn’t have parenthesis?</li>
+<li>Simple language with almost no grammar</li>
+<li>Yet expressive and powerful</li>
+<li>Heard about it: Michelson, Nasa, etc.</li>
+<li>Great for writing DSLs</li>
+</ul>
+</section>
+<section id="forth-programs-are-actually-dsls" class="level1">
+<h1>Forth programs are actually DSLs!</h1>
+<p>Here’s a small program.</p>
+<p>What do you think this is going to print?</p>
+<pre class="forth"><code>line dot line dot dot cr</code></pre>
+<p><small>Let me show you…</small></p>
+</section>
+<section id="functional-vs-concatenative" class="level1">
+<h1>Functional vs Concatenative</h1>
+<ul>
+<li><p>Clojure is <strong>applicative:</strong> it executes by applying
+<code>f</code> to <code>args</code></p></li>
+<li><p>A program is written by <strong>composing</strong>
+functions</p></li>
+<li><p>Forth is <strong>concatenative:</strong> it executes by invoking
+words</p></li>
+<li><p>A program is written by <strong>concatenating</strong>
+words</p></li>
+<li><p>The stack is implicit, no <code>args</code> required</p></li>
+</ul>
+</section>
+<section id="let-me-show-you" class="level1">
+<h1>Let me show you…</h1>
+</section>
+<section id="recipe-implementing-a-language" class="level1">
+<h1>Recipe: implementing a language</h1>
+<p>You might need some or all of the following:</p>
+<ul>
+<li>A <strong>Reader</strong> (string -&gt; data structure)</li>
+<li>A <strong>Parser</strong> (data structure -&gt; other
+representation)</li>
+<li>An <strong>Interpreter</strong> (data structure -&gt;
+evaluation)</li>
+<li>A <strong>Compiler</strong> (data structure -&gt; executable)</li>
+</ul>
+</section>
+<section id="the-reader" class="level1">
+<h1>The Reader</h1>
+<ul>
+<li>If the language is Lispy use the Clojure reader
+<ul>
+<li>Plenty of examples: <code>core.test</code>,
+<code>core.async</code></li>
+</ul></li>
+<li>If not Lispy you can:
+<ul>
+<li>Instaparse it</li>
+<li>Hybrid approach (Clorth)</li>
+<li>Roll your own</li>
+</ul></li>
+</ul>
+</section>
+<section id="the-forth-grammar" class="level1">
+<h1>The Forth Grammar</h1>
+<section id="section-1" class="level2">
+<h2></h2>
+</section>
+<section id="are-you-ready" class="level2">
+<h2>Are you ready?</h2>
+</section>
+<section id="non_empty_word_list-word-space-word" class="level2">
+<h2><small><code>non_empty_word_list = word { space word }</code></small></h2>
+</section>
+</section>
+<section id="the-clorth-reader" class="level1">
+<h1>The Clorth Reader</h1>
+<pre class="clojure"><code>(def reader-specials
+  {&quot;:&quot; &quot;\\:&quot; &quot;;&quot; &quot;\\;&quot; &quot;~&quot; &quot;\\~&quot;}) ;; A few more
+
+(defn handle-specials [s]
+  (reduce (fn [s [s1 s2]]
+            (string/replace s s1 s2))
+    s reader-specials))
+
+(defn read [s]
+  (read-string (str &quot;[&quot; (handle-specials s) &quot;]&quot;)))
+
+;; Approach: move the tokens into a vector, parse the tokens
+;; Challenge: some Forth tokens are not valid Clojure symbols.</code></pre>
+</section>
+<section id="the-parser" class="level1">
+<h1>The Parser</h1>
+<ul>
+<li>The parser transforms the initial reading</li>
+<li>Normally it enriches tokens with semantic information</li>
+<li>The information is used for evaluation or compilation</li>
+<li>This is not an universal rule!</li>
+<li>Clorth doesn’t really have a parser.</li>
+</ul>
+</section>
+<section id="the-interpeter" class="level1">
+<h1>The Interpeter</h1>
+<ul>
+<li>Interpretation evaluates the language at the interpreter level
+itself</li>
+<li>Compilation is a level down (e.g. JVM, machine language etc.)</li>
+<li>The lower the level the faster the speed</li>
+<li>Clorth has currently a simple token interpreter</li>
+</ul>
+</section>
+<section id="tangent-interpreter-vs-compilation-levels" class="level1">
+<h1>Tangent: Interpreter VS compilation levels</h1>
+<ul>
+<li><code>1+</code> invokes <code>inc</code> that increments a number on
+the stack (Program level 0)</li>
+<li><code>1+</code> becomes a function that increments a number on the
+stack (Program level -1)</li>
+<li><code>1+</code> becomes bytecode <code>iadd</code> that increments
+an item from the JVM stack (Program level -2)</li>
+<li><code>1+</code> becomes <code>inc</code> i386 instruction that
+increments a CPU register (Program level -4)</li>
+</ul>
+</section>
+<section id="the-clorth-interpreter" class="level1">
+<h1>The Clorth Interpreter</h1>
+<pre class="clojure"><code>(defmulti word
+  (fn [_ args] (cond-&gt; args (coll? args) first)))
+
+(defmethod word &#39;drop
+  [env args]
+  (word (pop1 env) (rest args)))</code></pre>
+</section>
+<section id="the-clorth-repl" class="level1">
+<h1>The Clorth REPL</h1>
+<ul>
+<li>Clojure comes with <code>clojure.main/repl</code></li>
+<li>This is a small API to create your own REPL</li>
+<li>As expected it gives you a <code>:read</code> and an
+<code>:eval</code> options</li>
+<li>The Print/Loop part is taken care of</li>
+<li>Let me show you…</li>
+</ul>
+</section>
+<section id="some-hidded-features" class="level1">
+<h1>Some hidded features</h1>
+<ul>
+<li>The stack is immutable and passed as a parameter while
+interpreting</li>
+<li>There is interop to call into Clojure functions</li>
+<li>To go native, use the “_” prefix in front of a word</li>
+<li>Error messages are as simple as possible, no Java Exceptions</li>
+<li>Multimethods are split by namespaces: stdblib, math and soon
+others.</li>
+</ul>
+</section>
+<section id="whats-next" class="level1">
+<h1>What’s Next?</h1>
+<ul>
+<li>Variables, arrays</li>
+<li>Meta-programming</li>
+<li>Assembler-like programming</li>
+<li>Running “<a
+href="https://github.com/savetz/worms/blob/main/Source/Commodore/Worms.forth">Worms?</a>”
+:)</li>
+</ul>
+</section>
+<section id="resources" class="level1">
+<h1>Resources</h1>
+<ul>
+<li><a href="https://github.com/reborg/clorth">Clorth</a>: an ANSI
+compliant implementation</li>
+<li><a
+href="https://raw.githubusercontent.com/reborg/clorth-talk/master/202210-clojurians-meetup/slides.pdf">These
+Slides</a></li>
+<li><a href="https://gforth.org/">GNU Forth</a>: an ANSI compliant
+implementation</li>
+<li><a
+href="https://concatenative.org/wiki/view/Concatenative%20language">On
+the concatenative paradigm</a>: quick essay about concatenative program
+properties.</li>
+<li><a
+href="https://www.scitepress.org/papers/2009/22814/22814.pdf">CONCATENATIVE
+PROGRAMMING An Overlooked Paradigm in Functional Programming</a>: a well
+written paper about the relationship with functional programming.</li>
+</ul>
+</section>
+<section id="fin" class="level1">
+<h1><small>~ fin ~</small></h1>
+<p><img src="https://colorforth.github.io/nraos.jpg" width="400"></p>
+<p><small>Charles H. Moore, Inventor of Forth</small></p>
+</section>
+</div>
+
+<script src="../reveal.js/lib/js/head.min.js"></script>
+<script src="../reveal.js/js/reveal.js"></script>
+
+<script>
+  // Full list of configuration options available here:
+  // https://github.com/hakimel/reveal.js#configuration
+  Reveal.initialize({
+    controls: true,
+    progress: true,
+    history: true,
+    center: false,
+
+  // available themes are in /css/theme
+      theme: Reveal.getQueryHash().theme || 'beige',
+  
+  // default/cube/page/concave/zoom/linear/fade/none
+      transition: Reveal.getQueryHash().transition || 'linear',
+  
+    dependencies: [
+      { src: '../reveal.js/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+      { src: '../reveal.js/plugin/markdown/showdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+      { src: '../reveal.js/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+      { src: '../reveal.js/plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+      { src: '../reveal.js/plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+      { src: '../reveal.js/plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } },
+      { src: '../reveal.js/plugin/toc-progress/toc-progress.js', async: true, callback: function() { toc_progress.initialize(); toc_progress.create(); } }
+      // { src: '../reveal.js/plugin/remotes/remotes.js', async: true, condition: function() { return !!document.body.classList; } }
+    ]
+  });
+
+</script>
+
+</body>
+</html>
